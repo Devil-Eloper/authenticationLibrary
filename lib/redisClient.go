@@ -3,7 +3,6 @@ package lib
 import (
 	"context"
 	"github.com/redis/go-redis/v9"
-	"log"
 	"time"
 )
 
@@ -41,6 +40,5 @@ func NewRedisClient() *RedisClient {
 	redisClient := &RedisClient{
 		client: client,
 	}
-	log.Print(redisOptions.Addr, "Redis 22", redisOptions.Password)
 	return redisClient
 }
