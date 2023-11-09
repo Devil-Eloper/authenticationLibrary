@@ -41,6 +41,6 @@ func NewRedisClient() *RedisClient {
 	redisClient := &RedisClient{
 		client: client,
 	}
-	log.Print(redisOptions.Addr, redisOptions.Password)
+	log.Print(redisOptions.Addr, "Redis 22", redisOptions.Password)
 	return redisClient
 }
