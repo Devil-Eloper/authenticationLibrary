@@ -19,6 +19,8 @@ var environmentInformation = map[string]variableInformation{
 	clientId:     {required: true},
 	clientSecret: {required: true},
 	authUrl:      {required: true},
+	redisAddress: {required: true},
+	redisSecret:  {required: true},
 }
 
 // initializeEnvironment initializes the environment map and ensures all required values are set
