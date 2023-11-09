@@ -29,7 +29,7 @@ func RetrieveAuthToken(httpClient *http.Client, logger *splunkLogger.Logger) (st
 		}
 	}(redisClient)
 	redisObject, err := redisClient.Get(accessTokenObject)
-	log.Print("Redis 2", redisObject)
+	log.Print("Redis 2", redisObject, err.Error())
 	if redisObject != "" {
 		var tokenObject datamodels.TokenObject
 		err = json.Unmarshal([]byte(redisObject), &tokenObject)
@@ -69,7 +69,7 @@ func RetrieveAuthToken(httpClient *http.Client, logger *splunkLogger.Logger) (st
 		}
 	}(resp.Body)
 	if resp.StatusCode != http.StatusOK {
-		log.Print("Redis 7")
+		log.Print("Redis 7", resp.StatusCode)
 		logger.Info("", "RAT1.4", "")
 		return "", nil
 	}
