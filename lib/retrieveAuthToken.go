@@ -7,17 +7,16 @@ import (
 	"github.com/Devil-Eloper/authenticationLibrary/lib/datamodels"
 	splunkLogger "github.com/Devil-Eloper/splunkLogger/lib"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
 )
 
-func RetrieveAuthToken(httpClient *http.Client, logger *splunkLogger.Logger) (string, error) {
+func RetrieveAuthToken(httpClient *http.Client, logger *splunkLogger.Logger, messageId string) (string, error) {
 	envErrors := initializeEnvironment()
+	logger.Info(messageId, "RAT1.0", "Redis Milestone 1")
 	if envErrors != nil {
-		logger.Info("", "RAT1.0", "")
-		log.Print("Redis 0")
+		logger.Error(messageId, "RAT1.1", "Redis Milestone 1.1 "+envErrors.Error())
 		return "", envErrors
 	}
 
@@ -25,11 +24,11 @@ func RetrieveAuthToken(httpClient *http.Client, logger *splunkLogger.Logger) (st
 	defer func(redisClient *RedisClient) {
 		err := redisClient.Close()
 		if err != nil {
-			log.Print("Redis 1")
+			logger.Error(messageId, "RAT1.2", "Redis Milestone 1.2 "+err.Error())
 		}
 	}(redisClient)
 	redisObject, err := redisClient.Get(accessTokenObject)
-	log.Print("Redis 2", redisObject, err.Error())
+	logger.Info(messageId, "RAT1.3", "Redis Milestone 1.3")
 	if redisObject != "" {
 		var tokenObject datamodels.TokenObject
 		err = json.Unmarshal([]byte(redisObject), &tokenObject)
@@ -43,11 +42,10 @@ func RetrieveAuthToken(httpClient *http.Client, logger *splunkLogger.Logger) (st
 		}
 	}
 	apiURL := environment[authUrl]
-	log.Print("Redis 3")
+	logger.Info(messageId, "RAT1.4", "Redis Milestone 1.4")
 	req, err := http.NewRequest(post, apiURL, nil)
 	if err != nil {
-		logger.Info("", "RAT1.1", "")
-		log.Print("Redis 4")
+		logger.Error(messageId, "RAT1.5", "Redis Milestone 1.5 "+err.Error())
 		return "", err
 	}
 
@@ -57,39 +55,34 @@ func RetrieveAuthToken(httpClient *http.Client, logger *splunkLogger.Logger) (st
 	req.Header.Set(authorization, authHeader)
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		log.Print("Redis 5")
-		logger.Info("", "RAT1.2", "")
+		logger.Error(messageId, "RAT1.6", "Redis Milestone 1.6 "+err.Error())
 		return "", err
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			log.Print("Redis 6")
-			logger.Info("", "RAT1.3", "")
+			logger.Info(messageId, "RAT1.7", "Redis Milestone 1.7")
 		}
 	}(resp.Body)
 	if resp.StatusCode != http.StatusOK {
-		log.Print("Redis 7", resp.StatusCode)
-		logger.Info("", "RAT1.4", "")
+		logger.Error(messageId, "RAT1.8", "Redis Milestone 1.8 Status Code:"+strconv.Itoa(resp.StatusCode))
 		return "", nil
 	}
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Print("Redis 8")
-		logger.Info("", "RAT1.5", "")
+		logger.Error(messageId, "RAT1.9", "Redis Milestone 1.9 "+err.Error())
 		return "", err
 	}
 	var jsonData map[string]interface{}
 
 	if err := json.Unmarshal([]byte(body), &jsonData); err != nil {
-		log.Print("Redis 9")
-		logger.Info("", "RAT1.6", "")
+		logger.Error(messageId, "RAT1.10", "Redis Milestone 1.10 "+err.Error())
 		return "", err
 	}
 
 	responseToken, foundAccessToken := jsonData[accessToken]
 	expiresInToken, foundExpiresIn := jsonData[expiresIn]
-	log.Print("Redis 10")
+	logger.Info(messageId, "RAT1.11", "Redis Milestone 1.11")
 	if foundAccessToken && foundExpiresIn {
 		responseToken := fmt.Sprintf("%v", responseToken)
 		expiresInString := fmt.Sprintf("%v", expiresInToken)
@@ -97,20 +90,19 @@ func RetrieveAuthToken(httpClient *http.Client, logger *splunkLogger.Logger) (st
 		tokenObject.AccessToken = responseToken
 		expiresIn, err := strconv.Atoi(expiresInString)
 		if err != nil {
-			log.Print("Redis 11")
+			logger.Error(messageId, "RAT1.12", "Redis Milestone 1.12 "+err.Error())
 			panic(err)
 		}
 		tokenObject.ExpiresIn = expiresIn
 		tokenObject.RetrievedDate = time.Now()
 		jsonData, err := json.Marshal(tokenObject)
 		if err != nil {
-			log.Print("Redis 12")
-			fmt.Println("JSON marshaling error:", err)
+			logger.Info(messageId, "RAT1.13", "Redis Milestone 1.13 "+err.Error())
 			return "", err
 		}
-		logger.Info("", "RAT1.7", "") // This log is indicative of successful token generation
+		logger.Info(messageId, "RAT1.14", "Redis Milestone 1.14") // This log is indicative of successful token generation
 		err = redisClient.Set(accessTokenObject, jsonData, 0)
-		log.Print("Redis 12")
+		logger.Info(messageId, "RAT1.15", "Redis Milestone 1.15")
 		return responseToken, nil
 	}
 	return "", nil
